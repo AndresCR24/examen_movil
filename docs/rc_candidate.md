@@ -1,4 +1,4 @@
-# Declaración de Release Candidate - Incidencias de mantenimiento del campus
+# Declaración de Release Candidate - Incidencias de mantenimiento del campus.
 
 ## Información general
 

@@ -1,4 +1,4 @@
-# Backlog de bugs - Incidencias de mantenimiento del campus
+# Backlog de bugs - Incidencias de mantenimiento del campus.
 
 | ID | TÍTULO | PASOS PARA SEGUIR | PRIORIDAD | ESTADO |
 |----|--------|-------------------|-----------|--------|

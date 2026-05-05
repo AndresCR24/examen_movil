@@ -1,4 +1,4 @@
-# Release Checklist - Incidencias de mantenimiento del Campus
+# Release Checklist - Incidencias de mantenimiento del Campus.
 
 Build evaluada: 1.0.0+1
 

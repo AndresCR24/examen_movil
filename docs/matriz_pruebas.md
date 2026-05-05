@@ -1,6 +1,6 @@
 # Matriz miníma de pruebas - Incidencias de mantenimiento del campus
 
-## Información general
+## Información general.
 
 **Nombre de la app:** mantenimiento_campus
 **Tipo de app:** App para gestionar registros/incidencias de mantenimiento en el campus
