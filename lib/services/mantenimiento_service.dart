@@ -25,6 +25,19 @@ class MantenimientoRemoteService {
     }
   }
 
+  Future<void> deleteTask(int id) async {
+    try {
+      await _ref.doc(id.toString()).delete();
+      debugPrint('[MantenimientoRemoteService] Eliminado en Firebase: $id');
+    } on FirebaseException catch (e, st) {
+      debugPrint('[MantenimientoRemoteService] FirebaseException delete: ${e.message}');
+      Error.throwWithStackTrace(e, st);
+    } catch (e, st) {
+      debugPrint('[MantenimientoRemoteService] Error inesperado delete: $e');
+      Error.throwWithStackTrace(e, st);
+    }
+  }
+
   Future<List<MantenimientoModel>> fetchTasks() async {
     try {
       final snapshot = await _ref.get();
@@ -44,6 +57,5 @@ class MantenimientoRemoteService {
       debugPrint('[MantenimientoRemoteService] Error inesperado fetch: $e');
       Error.throwWithStackTrace(e, st);
     }
-    return [];
   }
 }

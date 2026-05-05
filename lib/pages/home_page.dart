@@ -16,6 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _loading = true;
+  bool _syncing = false;
   String? _error;
 
   @override
@@ -55,7 +56,7 @@ class _HomePageState extends State<HomePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al sincronizar: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
               duration: const Duration(seconds: 6),
             ),
           );
@@ -64,15 +65,105 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _updateEstado(
+    MantenimientoModel task,
+    EstadoMantenimiento estado,
+  ) async {
+    try {
+      await widget.repository.updateEstado(task: task, estado: estado);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Estado actualizado: ${estado.label}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar estado: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateDevuelto(MantenimientoModel task, bool devuelto) async {
+    try {
+      await widget.repository.updateDevuelto(task: task, devuelto: devuelto);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(devuelto ? 'Marcado como devuelto' : 'Marcado como no devuelto'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteTask(MantenimientoModel task) async {
+    try {
+      await widget.repository.deleteTask(task);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro eliminado'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _syncAll() async {
-    await widget.repository.syncPendingTasks();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sincronización completada'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+    setState(() => _syncing = true);
+    try {
+      await widget.repository.syncPendingTasks();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sincronización completada'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al sincronizar: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _syncing = false);
     }
   }
 
@@ -100,11 +191,24 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: _syncAll,
-            tooltip: 'Sincronizar pendientes',
-          ),
+          if (_syncing)
+            const Padding(
+              padding: EdgeInsets.all(14),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.sync),
+              onPressed: _syncAll,
+              tooltip: 'Sincronizar pendientes',
+            ),
         ],
       ),
       body: _loading
@@ -170,15 +274,23 @@ class _HomePageState extends State<HomePage> {
         }
 
         final tasks = snapshot.data ?? [];
-        final completed = tasks.where((t) => t.completed).length;
-        final pending = tasks.length - completed;
+        final sinSync = tasks.where((t) => t.pendingSync).length;
+        final resueltos = tasks
+            .where((t) =>
+                t.estado == EstadoMantenimiento.resuelto ||
+                t.estado == EstadoMantenimiento.finalizado)
+            .length;
+        final pendientes = tasks
+            .where((t) => t.estado == EstadoMantenimiento.pendiente)
+            .length;
 
         return Column(
           children: [
             _buildSummaryBar(
               total: tasks.length,
-              completed: completed,
-              pending: pending,
+              pendientes: pendientes,
+              resueltos: resueltos,
+              sinSync: sinSync,
             ),
             Expanded(
               child: tasks.isEmpty
@@ -187,10 +299,16 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {
+                        final task = tasks[index];
                         return MantenimientoTile(
-                          mantenimiento: tasks[index],
+                          mantenimiento: task,
                           onToggle: () =>
-                              widget.repository.toggleTask(tasks[index]),
+                              widget.repository.toggleTask(task),
+                          onEstadoChanged: (estado) =>
+                              _updateEstado(task, estado),
+                          onDevueltoChanged: (devuelto) =>
+                              _updateDevuelto(task, devuelto),
+                          onDelete: () => _deleteTask(task),
                         );
                       },
                     ),
@@ -203,8 +321,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSummaryBar({
     required int total,
-    required int completed,
-    required int pending,
+    required int pendientes,
+    required int resueltos,
+    required int sinSync,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
@@ -215,16 +334,24 @@ class _HomePageState extends State<HomePage> {
           _StatChip(label: 'Total', value: total, color: colorScheme.onPrimary),
           const SizedBox(width: 8),
           _StatChip(
-            label: 'Completadas',
-            value: completed,
-            color: Colors.greenAccent.shade100,
+            label: 'Pendientes',
+            value: pendientes,
+            color: Colors.orangeAccent.shade100,
           ),
           const SizedBox(width: 8),
           _StatChip(
-            label: 'Pendientes',
-            value: pending,
-            color: Colors.orangeAccent.shade100,
+            label: 'Resueltos',
+            value: resueltos,
+            color: Colors.greenAccent.shade100,
           ),
+          if (sinSync > 0) ...[
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'Sin sync',
+              value: sinSync,
+              color: Colors.redAccent.shade100,
+            ),
+          ],
         ],
       ),
     );

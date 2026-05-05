@@ -26,11 +26,14 @@ class MantenimientoRepository {
   Future<void> addTask({
     required String title,
     required String description,
+    EstadoMantenimiento estado = EstadoMantenimiento.pendiente,
   }) async {
     final task = MantenimientoModel(
       title: title,
       description: description,
       completed: false,
+      estado: estado,
+      devuelto: false,
       updatedAt: DateTime.now(),
       pendingSync: true,
     );
@@ -69,6 +72,67 @@ class MantenimientoRepository {
       debugPrint('[MantenimientoRepository] Toggle sincronizado: ${task.id}');
     } catch (e) {
       debugPrint('[MantenimientoRepository] Toggle pendiente de sync: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateEstado({
+    required MantenimientoModel task,
+    required EstadoMantenimiento estado,
+  }) async {
+    if (task.id == null) return;
+
+    await localDb.updateEstado(id: task.id!, estado: estado);
+
+    try {
+      final updated = task.copyWith(
+        estado: estado,
+        updatedAt: DateTime.now(),
+        pendingSync: true,
+      );
+      await remoteService.upsertTask(updated);
+      await localDb.markAsSynced(task.id!);
+      debugPrint('[MantenimientoRepository] Estado actualizado: ${task.id} → ${estado.name}');
+    } catch (e) {
+      debugPrint('[MantenimientoRepository] updateEstado pendiente de sync: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateDevuelto({
+    required MantenimientoModel task,
+    required bool devuelto,
+  }) async {
+    if (task.id == null) return;
+
+    await localDb.updateDevuelto(id: task.id!, devuelto: devuelto);
+
+    try {
+      final updated = task.copyWith(
+        devuelto: devuelto,
+        updatedAt: DateTime.now(),
+        pendingSync: true,
+      );
+      await remoteService.upsertTask(updated);
+      await localDb.markAsSynced(task.id!);
+      debugPrint('[MantenimientoRepository] Devuelto actualizado: ${task.id} → $devuelto');
+    } catch (e) {
+      debugPrint('[MantenimientoRepository] updateDevuelto pendiente de sync: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTask(MantenimientoModel task) async {
+    if (task.id == null) return;
+
+    await localDb.deleteMantenimiento(task.id!);
+    debugPrint('[MantenimientoRepository] Eliminado localmente: ${task.id}');
+
+    try {
+      await remoteService.deleteTask(task.id!);
+      debugPrint('[MantenimientoRepository] Eliminado en Firebase: ${task.id}');
+    } catch (e) {
+      debugPrint('[MantenimientoRepository] Error al eliminar en Firebase: $e');
       rethrow;
     }
   }

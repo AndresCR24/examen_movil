@@ -13,6 +13,9 @@ class Mantenimientos extends Table {
   TextColumn get title => text()();
   TextColumn get description => text()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
+  TextColumn get estado =>
+      text().withDefault(const Constant('pendiente'))();
+  BoolColumn get devuelto => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get pendingSync => boolean().withDefault(const Constant(true))();
 }
@@ -22,7 +25,24 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(
+              mantenimientos,
+              mantenimientos.estado,
+            );
+            await m.addColumn(
+              mantenimientos,
+              mantenimientos.devuelto,
+            );
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
@@ -44,6 +64,8 @@ class AppDatabase extends _$AppDatabase {
       title: row.title,
       description: row.description,
       completed: row.completed,
+      estado: EstadoMantenimiento.fromString(row.estado),
+      devuelto: row.devuelto,
       updatedAt: row.updatedAt,
       pendingSync: row.pendingSync,
     );
@@ -67,6 +89,8 @@ class AppDatabase extends _$AppDatabase {
         title: model.title,
         description: model.description,
         completed: Value(model.completed),
+        estado: Value(model.estado.name),
+        devuelto: Value(model.devuelto),
         updatedAt: model.updatedAt,
         pendingSync: Value(model.pendingSync),
       ),
@@ -84,6 +108,8 @@ class AppDatabase extends _$AppDatabase {
         title: model.title,
         description: model.description,
         completed: model.completed,
+        estado: model.estado.name,
+        devuelto: model.devuelto,
         updatedAt: model.updatedAt,
         pendingSync: model.pendingSync,
       ),
@@ -101,6 +127,36 @@ class AppDatabase extends _$AppDatabase {
         pendingSync: const Value(true),
       ),
     );
+  }
+
+  Future<void> updateEstado({
+    required int id,
+    required EstadoMantenimiento estado,
+  }) async {
+    await (update(mantenimientos)..where((t) => t.id.equals(id))).write(
+      MantenimientosCompanion(
+        estado: Value(estado.name),
+        updatedAt: Value(DateTime.now()),
+        pendingSync: const Value(true),
+      ),
+    );
+  }
+
+  Future<void> updateDevuelto({
+    required int id,
+    required bool devuelto,
+  }) async {
+    await (update(mantenimientos)..where((t) => t.id.equals(id))).write(
+      MantenimientosCompanion(
+        devuelto: Value(devuelto),
+        updatedAt: Value(DateTime.now()),
+        pendingSync: const Value(true),
+      ),
+    );
+  }
+
+  Future<void> deleteMantenimiento(int id) async {
+    await (delete(mantenimientos)..where((t) => t.id.equals(id))).go();
   }
 
   Future<List<MantenimientoModel>> getPendingMantenimientos() async {
@@ -125,6 +181,8 @@ class AppDatabase extends _$AppDatabase {
         title: Value(model.title),
         description: Value(model.description),
         completed: Value(model.completed),
+        estado: Value(model.estado.name),
+        devuelto: Value(model.devuelto),
         updatedAt: Value(model.updatedAt),
         pendingSync: const Value(false),
       ),

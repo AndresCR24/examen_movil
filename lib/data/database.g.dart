@@ -57,6 +57,31 @@ class $MantenimientosTable extends Mantenimientos
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
+  @override
+  late final GeneratedColumn<String> estado = GeneratedColumn<String>(
+    'estado',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pendiente'),
+  );
+  static const VerificationMeta _devueltoMeta = const VerificationMeta(
+    'devuelto',
+  );
+  @override
+  late final GeneratedColumn<bool> devuelto = GeneratedColumn<bool>(
+    'devuelto',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("devuelto" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -89,6 +114,8 @@ class $MantenimientosTable extends Mantenimientos
     title,
     description,
     completed,
+    estado,
+    devuelto,
     updatedAt,
     pendingSync,
   ];
@@ -130,6 +157,18 @@ class $MantenimientosTable extends Mantenimientos
       context.handle(
         _completedMeta,
         completed.isAcceptableOrUnknown(data['completed']!, _completedMeta),
+      );
+    }
+    if (data.containsKey('estado')) {
+      context.handle(
+        _estadoMeta,
+        estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
+      );
+    }
+    if (data.containsKey('devuelto')) {
+      context.handle(
+        _devueltoMeta,
+        devuelto.isAcceptableOrUnknown(data['devuelto']!, _devueltoMeta),
       );
     }
     if (data.containsKey('updated_at')) {
@@ -174,6 +213,14 @@ class $MantenimientosTable extends Mantenimientos
         DriftSqlType.bool,
         data['${effectivePrefix}completed'],
       )!,
+      estado: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}estado'],
+      )!,
+      devuelto: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}devuelto'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -196,6 +243,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
   final String title;
   final String description;
   final bool completed;
+  final String estado;
+  final bool devuelto;
   final DateTime updatedAt;
   final bool pendingSync;
   const Mantenimiento({
@@ -203,6 +252,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
     required this.title,
     required this.description,
     required this.completed,
+    required this.estado,
+    required this.devuelto,
     required this.updatedAt,
     required this.pendingSync,
   });
@@ -213,6 +264,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
     map['completed'] = Variable<bool>(completed);
+    map['estado'] = Variable<String>(estado);
+    map['devuelto'] = Variable<bool>(devuelto);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
@@ -224,6 +277,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
       title: Value(title),
       description: Value(description),
       completed: Value(completed),
+      estado: Value(estado),
+      devuelto: Value(devuelto),
       updatedAt: Value(updatedAt),
       pendingSync: Value(pendingSync),
     );
@@ -239,6 +294,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       completed: serializer.fromJson<bool>(json['completed']),
+      estado: serializer.fromJson<String>(json['estado']),
+      devuelto: serializer.fromJson<bool>(json['devuelto']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
@@ -251,6 +308,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'completed': serializer.toJson<bool>(completed),
+      'estado': serializer.toJson<String>(estado),
+      'devuelto': serializer.toJson<bool>(devuelto),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'pendingSync': serializer.toJson<bool>(pendingSync),
     };
@@ -261,6 +320,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
     String? title,
     String? description,
     bool? completed,
+    String? estado,
+    bool? devuelto,
     DateTime? updatedAt,
     bool? pendingSync,
   }) => Mantenimiento(
@@ -268,6 +329,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
     title: title ?? this.title,
     description: description ?? this.description,
     completed: completed ?? this.completed,
+    estado: estado ?? this.estado,
+    devuelto: devuelto ?? this.devuelto,
     updatedAt: updatedAt ?? this.updatedAt,
     pendingSync: pendingSync ?? this.pendingSync,
   );
@@ -279,6 +342,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
           ? data.description.value
           : this.description,
       completed: data.completed.present ? data.completed.value : this.completed,
+      estado: data.estado.present ? data.estado.value : this.estado,
+      devuelto: data.devuelto.present ? data.devuelto.value : this.devuelto,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       pendingSync: data.pendingSync.present
           ? data.pendingSync.value
@@ -293,6 +358,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('completed: $completed, ')
+          ..write('estado: $estado, ')
+          ..write('devuelto: $devuelto, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('pendingSync: $pendingSync')
           ..write(')'))
@@ -300,8 +367,16 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, title, description, completed, updatedAt, pendingSync);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    description,
+    completed,
+    estado,
+    devuelto,
+    updatedAt,
+    pendingSync,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -310,6 +385,8 @@ class Mantenimiento extends DataClass implements Insertable<Mantenimiento> {
           other.title == this.title &&
           other.description == this.description &&
           other.completed == this.completed &&
+          other.estado == this.estado &&
+          other.devuelto == this.devuelto &&
           other.updatedAt == this.updatedAt &&
           other.pendingSync == this.pendingSync);
 }
@@ -319,6 +396,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
   final Value<String> title;
   final Value<String> description;
   final Value<bool> completed;
+  final Value<String> estado;
+  final Value<bool> devuelto;
   final Value<DateTime> updatedAt;
   final Value<bool> pendingSync;
   const MantenimientosCompanion({
@@ -326,6 +405,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.completed = const Value.absent(),
+    this.estado = const Value.absent(),
+    this.devuelto = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.pendingSync = const Value.absent(),
   });
@@ -334,6 +415,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
     required String title,
     required String description,
     this.completed = const Value.absent(),
+    this.estado = const Value.absent(),
+    this.devuelto = const Value.absent(),
     required DateTime updatedAt,
     this.pendingSync = const Value.absent(),
   }) : title = Value(title),
@@ -344,6 +427,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
     Expression<String>? title,
     Expression<String>? description,
     Expression<bool>? completed,
+    Expression<String>? estado,
+    Expression<bool>? devuelto,
     Expression<DateTime>? updatedAt,
     Expression<bool>? pendingSync,
   }) {
@@ -352,6 +437,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (completed != null) 'completed': completed,
+      if (estado != null) 'estado': estado,
+      if (devuelto != null) 'devuelto': devuelto,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (pendingSync != null) 'pending_sync': pendingSync,
     });
@@ -362,6 +449,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
     Value<String>? title,
     Value<String>? description,
     Value<bool>? completed,
+    Value<String>? estado,
+    Value<bool>? devuelto,
     Value<DateTime>? updatedAt,
     Value<bool>? pendingSync,
   }) {
@@ -370,6 +459,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
       title: title ?? this.title,
       description: description ?? this.description,
       completed: completed ?? this.completed,
+      estado: estado ?? this.estado,
+      devuelto: devuelto ?? this.devuelto,
       updatedAt: updatedAt ?? this.updatedAt,
       pendingSync: pendingSync ?? this.pendingSync,
     );
@@ -390,6 +481,12 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
     if (completed.present) {
       map['completed'] = Variable<bool>(completed.value);
     }
+    if (estado.present) {
+      map['estado'] = Variable<String>(estado.value);
+    }
+    if (devuelto.present) {
+      map['devuelto'] = Variable<bool>(devuelto.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -406,6 +503,8 @@ class MantenimientosCompanion extends UpdateCompanion<Mantenimiento> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('completed: $completed, ')
+          ..write('estado: $estado, ')
+          ..write('devuelto: $devuelto, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('pendingSync: $pendingSync')
           ..write(')'))
@@ -430,6 +529,8 @@ typedef $$MantenimientosTableCreateCompanionBuilder =
       required String title,
       required String description,
       Value<bool> completed,
+      Value<String> estado,
+      Value<bool> devuelto,
       required DateTime updatedAt,
       Value<bool> pendingSync,
     });
@@ -439,6 +540,8 @@ typedef $$MantenimientosTableUpdateCompanionBuilder =
       Value<String> title,
       Value<String> description,
       Value<bool> completed,
+      Value<String> estado,
+      Value<bool> devuelto,
       Value<DateTime> updatedAt,
       Value<bool> pendingSync,
     });
@@ -469,6 +572,16 @@ class $$MantenimientosTableFilterComposer
 
   ColumnFilters<bool> get completed => $composableBuilder(
     column: $table.completed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get estado => $composableBuilder(
+    column: $table.estado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get devuelto => $composableBuilder(
+    column: $table.devuelto,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -512,6 +625,16 @@ class $$MantenimientosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get estado => $composableBuilder(
+    column: $table.estado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get devuelto => $composableBuilder(
+    column: $table.devuelto,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -545,6 +668,12 @@ class $$MantenimientosTableAnnotationComposer
 
   GeneratedColumn<bool> get completed =>
       $composableBuilder(column: $table.completed, builder: (column) => column);
+
+  GeneratedColumn<String> get estado =>
+      $composableBuilder(column: $table.estado, builder: (column) => column);
+
+  GeneratedColumn<bool> get devuelto =>
+      $composableBuilder(column: $table.devuelto, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -592,6 +721,8 @@ class $$MantenimientosTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<bool> completed = const Value.absent(),
+                Value<String> estado = const Value.absent(),
+                Value<bool> devuelto = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> pendingSync = const Value.absent(),
               }) => MantenimientosCompanion(
@@ -599,6 +730,8 @@ class $$MantenimientosTableTableManager
                 title: title,
                 description: description,
                 completed: completed,
+                estado: estado,
+                devuelto: devuelto,
                 updatedAt: updatedAt,
                 pendingSync: pendingSync,
               ),
@@ -608,6 +741,8 @@ class $$MantenimientosTableTableManager
                 required String title,
                 required String description,
                 Value<bool> completed = const Value.absent(),
+                Value<String> estado = const Value.absent(),
+                Value<bool> devuelto = const Value.absent(),
                 required DateTime updatedAt,
                 Value<bool> pendingSync = const Value.absent(),
               }) => MantenimientosCompanion.insert(
@@ -615,6 +750,8 @@ class $$MantenimientosTableTableManager
                 title: title,
                 description: description,
                 completed: completed,
+                estado: estado,
+                devuelto: devuelto,
                 updatedAt: updatedAt,
                 pendingSync: pendingSync,
               ),
