@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "460970537341",
+    "project_id": "campus-ede23",
+    "storage_bucket": "campus-ede23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460970537341:android:6d43705d7102bfc1f11c14",
+        "android_client_info": {
+          "package_name": "com.example.mantenimiento_campus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwLjm5Yycs8TuwO0H4gVJTgyGF9QQqXT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
